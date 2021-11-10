@@ -1,7 +1,7 @@
 from threading import Lock
 from time import sleep
 
-from binance.websocket.spot.websocket_client import SpotWebsocketClient as Client
+from binance import ThreadedWebsocketManager
 
 import logging
 from binance.lib.utils import config_logging
@@ -25,32 +25,34 @@ class Job:
             "Job objects must be created using Job.get()"
 
         # settings
-        self.drop_ammount_to_notify_percent = 0.01
+        self.drop_ammount_to_notify_percent = 0.1
         self.tradesToFollow = 100
+        self.symbol = "DOGEBTC"
 
+        self.binance_manager = ThreadedWebsocketManager()
+        self.binance_manager.start()
+        self.job_running = False
+        self.mutex = Lock()
+
+        self.reset()
+
+
+    def reset(self):
         self.prices = [0] * self.tradesToFollow
         self.currentPriceIndex = 0
         self.maxPriceIndex = 0
         self.minPriceIndex = 0
 
-        self.binance_client = None
-        self.job_running = False
-        self.mutex = Lock()
-
 
     def start(self):
-        # config_logging(logging, logging.DEBUG)
         if self.job_running:
             return "Job is already running"
         
         self.job_running = True
-        self.binance_client = Client()
-        self.binance_client.start()
 
-        self.binance_client.agg_trade(
-            symbol="btcusdt",
-            id=1,
+        self.aggr_socket = self.binance_manager.start_aggtrade_socket(
             callback=self.notify,
+            symbol=self.symbol
         )
 
         return "Job successfully started"
@@ -59,14 +61,16 @@ class Job:
     def stop(self):
         if not self.job_running:
             return "Job is not running"
-        self.binance_client.stop()
-        self.binance_client = None
+
+        self.binance_manager.stop_socket(self.aggr_socket)
         self.job_running = False
+        self.reset()
 
         return "Job successfully stopped"
 
 
     def notify(self, info):
+        print(info)
         with self.mutex:
             if 'p' not in info:
                 return
@@ -74,7 +78,9 @@ class Job:
             newPrice = float(info['p'])
 
             if self.prices[self.maxPriceIndex] > newPrice * (1 + self.drop_ammount_to_notify_percent / 100):
-                print("Price has decrease by quite a lot")
+                print("Price has decrease by quite a lot:")
+                print("Max price in the last 100 trades: " + "{:.8f}".format(self.prices[self.maxPriceIndex]))
+                print("Current price: " + "{:.8f}".format(newPrice))
 
             self.prices[self.currentPriceIndex] = newPrice
 
@@ -109,6 +115,8 @@ class Job:
             minPrice = self.prices[0]
             for price in self.prices:
                 if price < minPrice:
+                    if price == 0:
+                        break
                     minPrice = price
             return minPrice
 

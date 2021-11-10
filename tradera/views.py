@@ -17,6 +17,6 @@ def stopJob(request):
     return HttpResponse(message)
     
 def getPrices(request):
-    data = {'maxPrice': Job.get().getMaxPrice(), 'minPrice': Job.get().getMinPrice()}
+    data = {'max': Job.get().getMaxPrice(), 'min': Job.get().getMinPrice()}
 
     return JsonResponse(data, safe=False)

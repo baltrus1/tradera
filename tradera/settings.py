@@ -68,31 +68,8 @@ TEMPLATES = [
     },
 ]
 
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'asgi_redis.RedisChannelLayer',
-#         'CONFIG': {
-#             'hosts': [('localhost', 6379)],
-#         },
-#         'ROUTING': 'tradera.routing.channel_routing',
-#     }
-# }
-
-
-WSGI_APPLICATION = 'tradera.wsgi.application'
-
+from .asgi import application
 ASGI_APPLICATION = 'tradera.asgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
 
 
 # Password validation

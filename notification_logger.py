@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 
-"""Helper that automatically starts the job, runs for a 
-minute or until stopped and logs notification."""
+# WS client example
 
-import requests
-from sys import argv
-from time import sleep
+import asyncio
+import websockets
 
-base_url = "http://127.0.0.1:8000/"
+async def hello():
+    uri = "ws://localhost:8000"
+    async with websockets.connect(uri) as websocket:
+        name = input("What's your name? ")
 
-suffix = "prices"
-if len(argv) == 2:
-	suffix = argv[1]
+        await websocket.send(name)
+        print(f">>> {name}")
 
-r = requests.get(url = base_url + suffix)
+        greeting = await websocket.recv()
+        print(f"<<< {greeting}")
 
-print(r.text)
-
+asyncio.run(hello())
