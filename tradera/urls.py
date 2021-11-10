@@ -19,7 +19,7 @@ from django.urls import include, path
 from . import views
 
 urlpatterns = [
-    path('start/', views.startJob,  name='startJob'),
-    path('stop/', views.stopJob,   name='stopJob'),
-    path('prices/', views.getPrices, name='prices'),
+    path('start/', views.start_job,  name='start_job'),
+    path('stop/', views.stop_job,   name='stop_job'),
+    path('prices/', views.get_prices, name='prices'),
 ]
