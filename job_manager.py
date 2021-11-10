@@ -4,7 +4,7 @@ import requests
 from sys import argv
 from time import sleep
 
-base_url = "http://127.0.0.1:8000/"
+base_url = "http://localhost:8000/"
 
 suffix = "prices"
 if len(argv) == 2:
@@ -18,6 +18,4 @@ try:
     print("Min price: {:.8f}".format(float(data["min"])))
 except ValueError as e:
 	print(r.text)
-
-# print("{:.8f}".format(float(r.json())))
 

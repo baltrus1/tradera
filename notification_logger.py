@@ -1,19 +1,12 @@
 #!/usr/bin/env python
 
-# WS client example
-
 import asyncio
 import websockets
+from time import sleep
 
-async def hello():
-    uri = "ws://localhost:8000"
-    async with websockets.connect(uri) as websocket:
-        name = input("What's your name? ")
-
-        await websocket.send(name)
-        print(f">>> {name}")
-
-        greeting = await websocket.recv()
-        print(f"<<< {greeting}")
-
-asyncio.run(hello())
+async def receiver():
+	async with websockets.connect("ws://localhost:8765") as websocket:
+		while True:
+			data = await websocket.recv()
+			print(data)
+asyncio.run(receiver())

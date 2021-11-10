@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from .job import Job
 
 ### Currently Job is singleton, ideally with each request new Job could be created, in request 
-#   a string should be passed for which currencies to follow(eg. "dogebtc", a number for how many last trades 
+#   a string symbol should be passed for which currencies to follow(eg. "dogebtc"), a number for how many last trades 
 #   should be considered. This api could return job id, which could then be looked up when stopping job, 
 #   also /list api could be added to list all running jobs.
 def startJob(request):
