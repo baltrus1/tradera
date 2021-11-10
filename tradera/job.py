@@ -56,9 +56,6 @@ class Job:
             self.notifications_thread = Thread(target=self.notifications_server)
             self.notifications_thread.start()
 
-
-
-
         self.job_running = True
 
         self.aggr_socket = self.binance_manager.start_aggtrade_socket(
