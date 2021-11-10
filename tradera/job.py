@@ -29,14 +29,12 @@ class Job:
         self.trades_to_follow = 100
         self.symbol = "DOGEBTC"
 
-        self.binance_manager = ThreadedWebsocketManager()
-        self.binance_manager.start()
+        self.binance_manager = None
         self.job_running = False
         self.mutex = Lock()
         self.notifications = SimpleQueue()
 
-        self.notifications_thread = Thread(target=self.notifications_server)
-        self.notifications_thread.start()
+        self.notifications_thread = None
 
         self.reset()
 
@@ -51,6 +49,16 @@ class Job:
         if self.job_running:
             return "Job is already running"
         
+        if self.binance_manager == None:
+            self.binance_manager = ThreadedWebsocketManager()
+            self.binance_manager.start()
+
+            self.notifications_thread = Thread(target=self.notifications_server)
+            self.notifications_thread.start()
+
+
+
+
         self.job_running = True
 
         self.aggr_socket = self.binance_manager.start_aggtrade_socket(
@@ -81,7 +89,7 @@ class Job:
             new_price = float(info['p'])
 
             if self.prices[self.max_price_index] > new_price * (1 + self.drop_ammount_to_notify_percent / 100):
-                self.notifications.put(self.format_message(new_price))
+                self.notifications.put(self.format_message(info['p']))
 
             self.prices[self.current_price_index] = new_price
 
@@ -107,11 +115,8 @@ class Job:
 
 
     def format_message(self, new_price):
-        return "Price has dropped:\n\t" +                      \
-        "Max price: " +                                      \
-        "{:.8f}".format(self.prices[self.max_price_index]) + \
-        ", Current price: " +                                \
-        "{:.8f}".format(new_price)                          \
+        return {"max_price": str(self.prices[self.max_price_index]),
+                "current_price": str(new_price)}
 
 
     def get_max_price(self):
@@ -143,6 +148,7 @@ class Job:
             await asyncio.Future()  # run forever
 
     async def client_callback(self, websocket, path):
+        self.notifications = SimpleQueue()
         while True:
             message = self.notifications.get()
             await websocket.send(str(message))
