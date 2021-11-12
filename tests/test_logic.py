@@ -33,8 +33,9 @@ class TestRequestHandler:
 			Job.get().request_handler(d)
 
 		while True:
-			if Job.get().notifications.empty():
+			if Job.get().notifications.empty() or expected_results.empty():
 				break
-			assert Job.get().notifications.get()["current_price"] == expected_results.get()
+			assert Job.get().notifications.get()["decreased_price"] == expected_results.get()
 
 		assert expected_results.empty()
+		assert Job.get().notifications.empty()

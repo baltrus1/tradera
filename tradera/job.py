@@ -83,44 +83,49 @@ class Job:
             if 'p' not in info:
                 return
 
-            new_price = float(info['p'])
+            new_price = info['p']
+            self.post_notification(new_price)
 
-            if self.prices[self.max_price_index] > new_price * (1 + self.drop_ammount_to_notify_percent / 100):
-                self.notifications.put(self.format_message(info['p']))
+            self.prices[self.current_price_index] = float(new_price)
 
-            self.prices[self.current_price_index] = new_price
-
-            if self.max_price_index == self.current_price_index:
-                # We have come full circle, update max price. Cycle backwards, so we have as much time until next update as possible
-                for index in range(self.current_price_index - 1, -1, -1):
-                    if self.prices[index] > self.prices[self.max_price_index]:
-                        self.max_price_index = index
-                        break
-                if self.max_price_index == self.current_price_index:
-                    for index in range(self.trades_to_follow - 1, self.current_price_index, -1):
-                        if self.prices[index] > self.prices[self.max_price_index]:
-                            self.max_price_index = index
-                            break
-
-            elif self.prices[self.current_price_index] >= self.prices[self.max_price_index]:
-                self.max_price_index = self.current_price_index
+            self.update_max_price()
 
             self.current_price_index += 1
             if self.current_price_index == self.trades_to_follow:
                 self.current_price_index = 0
 
 
+    def post_notification(self, price_str):
+        if self.prices[self.max_price_index] > float(price_str) * (1 + self.drop_ammount_to_notify_percent / 100):
+            self.notifications.put(self.format_message(price_str))
+
 
     def format_message(self, new_price):
-        return {"max_price": str(self.prices[self.max_price_index]),
-                "current_price": str(new_price)}
+        return {"decreased_price": str(new_price)}
 
+    def update_max_price(self):
+        if self.max_price_index == self.current_price_index:
+            # We have come full circle without finding bigger price than the one in current index.
+            # Since current is deleted, cycle through to find a new one. Doing it backwards to give as much time as possible until next update
+            # Search backwards from current index to 0
+            for index in range(self.current_price_index - 1, -1, -1):
+                if self.prices[index] > self.prices[self.max_price_index]:
+                    self.max_price_index = index
+
+            # Search backwards from end to current index
+            for index in range(self.trades_to_follow - 1, self.current_price_index, -1):
+                if self.prices[index] > self.prices[self.max_price_index]:
+                    self.max_price_index = index
+
+        elif self.prices[self.current_price_index] >= self.prices[self.max_price_index]:
+            self.max_price_index = self.current_price_index
 
     def get_max_price(self):
         return self.prices[self.max_price_index]
 
 
-    # Calculate min price here to not waste time checking every new price to get notifications faster.
+    # Assume we want to optimize for notifications and this is only used sometimes when /prices gets requested - 
+    # no reason to try to update min price every time new price event arrives
     def get_min_price(self):
         with self.mutex:
             minPrice = self.prices[0]
@@ -148,4 +153,7 @@ class Job:
         self.notifications = SimpleQueue()
         while True:
             message = self.notifications.get()
-            await websocket.send(str(message))
+            try:
+                await websocket.send(str(message))
+            except:
+                break

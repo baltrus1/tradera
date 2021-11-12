@@ -1,29 +1,28 @@
 # Tradera
-A simple notification server that follows last aggregated trades in binance and notifies any connected client about price drop with a certain precision.
+A server with background job that follows last aggregated trades in binance and notifies connected client about price drop with a certain precision
+Settings could be adjusted in job.py constructor for now
 
-Install missing dependencies: 'django', 'asyncio', 'websockets' with 'python3 -m pip install <>'
+# Installation
+Recommended setting up in virtual environment
+From project root:
+	pip3 install -r requirements.txt 
 
 # Usage
 
 Run server: 
-python3 manage.py runserver
+	./manage.py runserver
 
-Start following trades: 
-python3 job_manager.py start
+Server has 3 endpoinds:
+    /start - starts the job
+    /stop - stops the job
+    /prices - returns lowest and highest prices among the ones job is following
 
-Stop following trades: 
-python3 job_manager.py stop
+Helper to access endpoints:
+	./job_manager.py <option:[start/stop/prices]>
 
-Get highest and lowest prices in the last trades that job follows:
-python3 ./job_manager.py prices
-
-Run an example notification client service that just logs notifications from server:
-python3 notificaton_logger.py
+Run an example notification client service that just logs notifications from server (job has to be started):
+	./notificaton_logger.py
 
 # Testing
-
-install pytest:
-python3 -m pip install pytest
-
-While in root directory run:
-python3 -m pytest
+From root directory run:
+	python3 -m pytest
